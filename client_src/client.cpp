@@ -63,7 +63,7 @@ int main()
         valread = read(client_fd, buffer,
                     1024 - 1); // subtract 1 for the null
                                 // terminator at the end
-        decrypted_message = decryptMessage(buffer, 1, decryption_key, MODULUS);
+        decrypted_message = decryptMessage(buffer, decryption_key, MODULUS);
         printf("%c\n", decrypted_message);
     }
  

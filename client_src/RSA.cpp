@@ -50,7 +50,7 @@ uint32_t extendedEuclidean(uint32_t e, uint32_t phiOfn)
     return decryption_key;
 }
 
-int powerModN(uint32_t base, uint64_t power, uint32_t modulus)
+char powerModN(uint32_t base, uint64_t power, uint32_t modulus)
 {
     uint64_t result = 1;
     uint64_t base64b = (uint64_t) base;
@@ -59,11 +59,10 @@ int powerModN(uint32_t base, uint64_t power, uint32_t modulus)
         result *= base64b;
         result = result % modulus;
     }
-    return result;
-    //return (char) result & 0xFF; //since de = 1 mod phi(n) this regenerates the original message (which was 1 byte char)
+    return (char) result & 0xFF; //since de = 1 mod phi(n) this regenerates the original message (which was 1 byte char)
 }
 
-char decryptMessage(const char* message, uint16_t strlen, uint32_t decryptionKey, uint32_t modulus)
+char decryptMessage(const char* message, uint32_t decryptionKey, uint32_t modulus)
 {
     uint32_t* encrypted_message = (uint32_t*) message;
     return powerModN(*encrypted_message, decryptionKey, modulus); 
