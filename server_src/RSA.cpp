@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdio.h>
 
+char encryptedMsg[4] = {0};
+
 uint32_t powerModN(uint32_t base, uint32_t power, uint32_t modulus)
 {
     uint64_t result = 1;
@@ -17,7 +19,7 @@ uint32_t powerModN(uint32_t base, uint32_t power, uint32_t modulus)
 
 char* encrypt(const char* message, uint32_t encryptionKey, uint32_t modulus)
 {
-    char encryptedMsg[4] = {0};
+    memset(encryptedMsg, 0, 4);
     uint32_t encryptedChar = powerModN(message[0], encryptionKey, modulus);
     printf("encrypting %c as %d\n", message[0], encryptedChar);
     encryptedMsg[0] = (uint8_t) encryptedChar & 0xFF; //keep little endian
