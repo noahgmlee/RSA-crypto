@@ -1,34 +1,78 @@
-#include "RSA.h"
-#include <math.h>
-#include <string.h>
+// Server side C program to demonstrate Socket
+// programming
+#include <netinet/in.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <iostream>
+#include "RSA.h"
 
-char globalEncryptionBuffer[1024 * 4] = {0};
+#define PORT 3434 //AUSTON MATTHEWS
 
-uint32_t powerModN(uint32_t base, uint32_t power, uint32_t modulus)
+int main(int argc, char const* argv[])
 {
-    uint64_t result = 1;
-    uint64_t base64b = (uint64_t) base;
-    for (int i = 0; i < power; i++)
-    {
-        result *= base64b;
-        result = result % modulus;
+    int server_fd, new_socket;
+    ssize_t valread;
+    struct sockaddr_in address;
+    int opt = 1;
+    socklen_t addrlen = sizeof(address);
+    char buffer[1024] = { 0 };
+ 
+    // Creating socket file descriptor
+    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        perror("socket failed");
+        exit(EXIT_FAILURE);
     }
-    return (uint32_t) result;
-}
+ 
+    // Forcefully attaching socket to the port 8080
+    if (setsockopt(server_fd, SOL_SOCKET,
+                   SO_REUSEADDR | SO_REUSEPORT, &opt,
+                   sizeof(opt))) {
+        perror("setsockopt");
+        exit(EXIT_FAILURE);
+    }
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(PORT);
+ 
+    // Forcefully attaching socket to the port 8080
+    if (bind(server_fd, (struct sockaddr*)&address,
+             sizeof(address))
+        < 0) {
+        perror("bind failed");
+        exit(EXIT_FAILURE);
+    }
+    if (listen(server_fd, 3) < 0) {
+        perror("listen");
+        exit(EXIT_FAILURE);
+    }
+    if ((new_socket
+         = accept(server_fd, (struct sockaddr*)&address,
+                  &addrlen))
+        < 0) {
+        perror("accept");
+        exit(EXIT_FAILURE);
+    }
+    valread = read(new_socket, buffer,
+                   1024 - 1); // subtract 1 for the null
+                              // terminator at the end
 
-char* encrypt(const char* message, uint16_t strlen, uint32_t encryptionKey, uint32_t modulus)
-{
-    memset(globalEncryptionBuffer, 0, 1024 * 4); //clear buffer
-    for (int i = 0; i < strlen; i++)
+    uint32_t* modulus = (uint32_t*) buffer;
+    uint32_t* encryption_key = (uint32_t*) &buffer[4];
+    
+    char userInput = '.';
+    while(userInput != '!')
     {
-        int offset = 4*i;
-        uint32_t encryptedChar = powerModN(message[i], encryptionKey, modulus);
-        printf("encrypting %c as %d\n", message[i], encryptedChar);
-        globalEncryptionBuffer[offset] = (uint8_t) encryptedChar & 0xFF; //keep little endian
-        globalEncryptionBuffer[offset + 1] = (uint8_t) (encryptedChar >> 8) & 0xFF; //keep little endian
-        globalEncryptionBuffer[offset + 2] = (uint8_t) (encryptedChar >> 16) & 0xFF; //keep little endian
-        globalEncryptionBuffer[offset + 3] = (uint8_t) (encryptedChar >> 24) & 0xFF; //keep little endian     
+        std::cin >> userInput;
+        char* encryptedMsg = encrypt(&userInput, *encryption_key, *modulus);
+        send(new_socket, encryptedMsg, 4, 0);
     }
-    return globalEncryptionBuffer;
+ 
+    // closing the connected socket
+    close(new_socket);
+    // closing the listening socket
+    close(server_fd);
+    return 0;
 }
